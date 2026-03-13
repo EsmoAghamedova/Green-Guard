@@ -1,206 +1,141 @@
-import { Link } from "react-router";
-import { TreePine, Award, Calendar, MapPin, TrendingUp, AlertTriangle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { Button } from "../components/ui/button";
+// 
 
-const userStats = {
-  name: "Alex Green",
-  joinDate: "January 2026",
-  treesPlanted: 47,
-  reportsSubmitted: 3,
-  achievements: [
-    { id: 1, name: "First Tree", icon: "🌱", earned: true },
-    { id: 2, name: "10 Trees Club", icon: "🌳", earned: true },
-    { id: 3, name: "Community Guardian", icon: "🛡️", earned: true },
-    { id: 4, name: "50 Trees Milestone", icon: "🏆", earned: false },
-    { id: 5, name: "Climate Champion", icon: "🌍", earned: false },
-  ],
-  recentActivity: [
-    {
-      id: 1,
-      type: "plant",
-      count: 5,
-      species: "Red Maple",
-      location: "Central Park North",
-      date: "March 10, 2026",
-    },
-    {
-      id: 2,
-      type: "report",
-      location: "Forest Edge",
-      date: "March 8, 2026",
-    },
-    {
-      id: 3,
-      type: "plant",
-      count: 3,
-      species: "White Oak",
-      location: "Riverside Green Belt",
-      date: "March 5, 2026",
-    },
-  ],
-};
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { useAuthStore } from '../../store/authStore'
+import { User, Mail, LogOut, Upload } from 'lucide-react'
 
 export function UserProfile() {
+  const navigate = useNavigate()
+  const { user, loading, signOut, updateProfile } = useAuthStore()
+  const [isEditing, setIsEditing] = useState(false)
+  const [username, setUsername] = useState(user?.username || '')
+  const [updating, setUpdating] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login')
+    }
+  }, [user, navigate])
+
+  const handleUpdateProfile = async () => {
+    if (!username.trim()) return
+
+    setUpdating(true)
+    try {
+      await updateProfile({ username })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Update error:', error)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login')
+  }
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin">Loading...</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-4">
-      {/* Profile Header */}
-      <Card className="mb-4">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center text-center">
-            <Avatar className="w-20 h-20 mb-3">
-              <AvatarFallback className="bg-green-600 text-white text-2xl">
-                {userStats.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            <h1 className="text-2xl mb-2 font-bold">{userStats.name}</h1>
-            <div className="flex flex-wrap gap-2 justify-center mb-4">
-              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-                <Calendar className="w-3 h-3" />
-                {userStats.joinDate}
-              </Badge>
-              <Badge className="bg-green-600 flex items-center gap-1 text-xs">
-                <TreePine className="w-3 h-3" />
-                Active Planter
-              </Badge>
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 p-4">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold text-green-700 mb-8">👤 My Profile</h1>
+
+        <div className="bg-white rounded-lg shadow-lg p-8 space-y-6">
+          {/* Profile Header */}
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+              <User className="w-12 h-12 text-white" />
             </div>
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="text-3xl font-semibold text-green-600">
-                  {userStats.treesPlanted}
-                </div>
-                <div className="text-xs text-gray-600">Trees Planted</div>
-              </div>
-              <div className="bg-red-50 rounded-lg p-3">
-                <div className="text-3xl font-semibold text-red-600">
-                  {userStats.reportsSubmitted}
-                </div>
-                <div className="text-xs text-gray-600">Reports</div>
-              </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">{user.username || 'User'}</h2>
+              <p className="text-gray-600">{user.email}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Achievements */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Award className="w-5 h-5 text-yellow-600" />
-            Achievements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-2">
-            {userStats.achievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`flex flex-col items-center p-3 rounded-lg border-2 ${
-                  achievement.earned
-                    ? "border-yellow-400 bg-yellow-50"
-                    : "border-gray-200 bg-gray-50 opacity-50"
-                }`}
-              >
-                <div className="text-3xl mb-1">{achievement.icon}</div>
-                <div className="text-[10px] text-center font-medium leading-tight">
-                  {achievement.name}
+          {/* User Info */}
+          <div className="border-t pt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Username
+              </label>
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="flex-1 px-4 py-2 border-2 border-green-300 rounded-lg focus:outline-none focus:border-green-600"
+                  />
+                  <button
+                    onClick={handleUpdateProfile}
+                    disabled={updating}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false)
+                      setUsername(user.username || '')
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
                 </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-800">{user.username || 'Not set'}</p>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="text-green-600 hover:underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-gray-500" />
+                <p className="text-gray-800">{user.email}</p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
 
-      {/* Environmental Impact */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="w-5 h-5 text-green-600" />
-            Your Impact
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="text-2xl font-semibold text-green-600 mb-0.5">~940 kg</div>
-              <div className="text-xs text-gray-600">CO₂ to be absorbed</div>
-            </div>
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="text-2xl font-semibold text-blue-600 mb-0.5">47</div>
-              <div className="text-xs text-gray-600">Wildlife habitats created</div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-3">
-              <div className="text-2xl font-semibold text-purple-600 mb-0.5">Top 15%</div>
-              <div className="text-xs text-gray-600">Community ranking</div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                User ID
+              </label>
+              <p className="text-gray-600 text-sm font-mono">{user.id}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Recent Activity */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="text-base">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {userStats.recentActivity.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start gap-3 p-3 rounded-lg border border-gray-200"
-              >
-                <div
-                  className={`p-2 rounded-full ${
-                    activity.type === "plant"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {activity.type === "plant" ? (
-                    <TreePine className="w-4 h-4" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  {activity.type === "plant" ? (
-                    <p className="font-medium mb-1 text-sm">
-                      Planted {activity.count} {activity.species}
-                    </p>
-                  ) : (
-                    <p className="font-medium mb-1 text-sm">Submitted report</p>
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate">{activity.location}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{activity.date}</p>
-                </div>
-              </div>
-            ))}
+          {/* Sign Out Button */}
+          <div className="border-t pt-6">
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition"
+            >
+              <LogOut size={20} />
+              Sign Out
+            </button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-3">
-        <Link to="/plant-tree">
-          <Button className="w-full bg-green-600 hover:bg-green-700">
-            <TreePine className="w-4 h-4 mr-2" />
-            Plant More Trees
-          </Button>
-        </Link>
-        <Link to="/community">
-          <Button variant="outline" className="w-full">
-            View Leaderboard
-          </Button>
-        </Link>
+        </div>
       </div>
     </div>
-  );
+  )
 }
